@@ -8,6 +8,7 @@ import com.vish.myguru.features.vacabulary.model.Word
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 
@@ -28,26 +29,51 @@ class MainViewModel(
 
     init {
         // Fetch the data the moment the ViewModel is created
-        fetchVocabulary()
+        observeLocalDatabase()
+        refreshFromNetwork()
     }
-
-    private fun fetchVocabulary() {
-    viewModelScope.launch {
-        _uiState.value = UiState.Loading
-        val result = repository.fetchWords()
-
-        result.onSuccess { words ->
-          //  Log.d("KtorTest", "ViewModel State: SUCCESS! Fetched ${words.size} words.")
-            _uiState.value = UiState.Success(words)
-        }.onFailure { exception ->
-          //  Log.d("KtorTest", "ViewModel State: ERROR! ${exception.message}")
-            _uiState.value = UiState.Error(exception.message ?: "Unknown error occurred")
+    private fun observeLocalDatabase(){
+        viewModelScope.launch {
+            repository.wordsFlow
+                .catch { error ->
+                    _uiState.value = UiState.Error(error.message ?: "Database query failed")
+                }
+                .collect { words ->
+                    _uiState.value = UiState.Success(words)
+                }
         }
     }
 
-
-
+    private fun refreshFromNetwork() {
+        viewModelScope.launch {
+            repository.fetchWords().onFailure { error ->
+                // If offline, Room cache remains visible; optionally report error state
+                if (_uiState.value !is UiState.Success) {
+                    _uiState.value = UiState.Error(error.message ?: "Network sync failed")
+                }
+            }
+        }
     }
+    /*
+        private fun fetchVocabulary() {
+        viewModelScope.launch {
+            _uiState.value = UiState.Loading
+            val result = repository.fetchWords()
+
+            result.onSuccess { words ->
+              //  Log.d("KtorTest", "ViewModel State: SUCCESS! Fetched ${words.size} words.")
+                _uiState.value = UiState.Success(words)
+            }.onFailure { exception ->
+              //  Log.d("KtorTest", "ViewModel State: ERROR! ${exception.message}")
+                _uiState.value = UiState.Error(exception.message ?: "Unknown error occurred")
+            }
+        }
+
+
+
+        }
+    */
+
     fun isAlreadyMastered(wordId:String){
         val currentUiState = _uiState.value
         if (currentUiState is UiState.Success) {

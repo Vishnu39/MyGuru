@@ -28,7 +28,7 @@ val appModule = module {
     }
 
     // 3. Repository
-    single { VocabularyRepository() }
+    single { VocabularyRepository(wordDao = get()) }
 
     // 4. ViewModel (injects the single VocabularyRepository)
     viewModel { MainViewModel(get()) }

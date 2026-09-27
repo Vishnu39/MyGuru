@@ -15,7 +15,7 @@ data class WordEntity(
     @PrimaryKey val id: String,
     val germanTerm: String,
     val englishTranslation: String,
-    val article: String?,
+    val article: String,
     val isMastered: Boolean = false,
     val nextReviewEpoch: Long = 0L // Unix timestamp for the next Leitner review
 )
