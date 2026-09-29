@@ -36,7 +36,8 @@ class VocabularyRepository (private val wordDao: WordDao){
     suspend fun fetchWords(): Result<Unit> = withContext(Dispatchers.IO) {
          runCatching {
 
-             val remoteWords= ktorClient.get("https://gist.githubusercontent.com/Vishnu39/53b931797358491c32fe88d3122f6a74/raw/514d36a43cc53e15a80dee10444bd2ba718e946d/vocab.json")
+       //      val remoteWords= ktorClient.get("https://gist.githubusercontent.com/Vishnu39/53b931797358491c32fe88d3122f6a74/raw/514d36a43cc53e15a80dee10444bd2ba718e946d/vocab.json")
+             val remoteWords= ktorClient.get("https://gist.githubusercontent.com/Vishnu39/53b931797358491c32fe88d3122f6a74/raw/a32cb4cbd53619af6fec226514dbb6576e8ac6af/vocab.json")
                     .body<List<Word>>()
                 val entities = remoteWords.map {
                     word -> WordEntity(
