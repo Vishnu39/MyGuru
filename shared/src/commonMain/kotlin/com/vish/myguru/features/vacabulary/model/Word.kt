@@ -8,5 +8,7 @@ data class Word(
     val germanTerm: String,
     val englishTranslation: String,
     val article: String,
-    val isMastered: Boolean = false
+    val isMastered: Boolean = false,
+    val boxLevel: Int = 1,
+    val nextReviewEpoch: Long = 0L
 )

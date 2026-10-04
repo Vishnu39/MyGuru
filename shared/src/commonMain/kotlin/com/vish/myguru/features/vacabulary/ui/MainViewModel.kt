@@ -1,87 +1,93 @@
 package com.vish.myguru.features.vacabulary.ui
 
-//import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vish.myguru.features.vacabulary.repository.VocabularyRepository
 import com.vish.myguru.features.vacabulary.model.Word
+import com.vish.myguru.features.vacabulary.repository.VocabularyRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-
-// The sealed interface guarantees that UiState can ONLY be one of these three things.
 sealed interface UiState {
-    object Loading : UiState
-    data class Success(val words: List<Word>) : UiState
+    data object Loading : UiState
+    data class ReviewSession(val cards: List<Word>) : UiState
+    data object CompletedToday : UiState
     data class Error(val message: String) : UiState
 }
+
 class MainViewModel(
     private val repository: VocabularyRepository
 ) : ViewModel() {
-    // 2. Internal Mutable State (Starts as Loading)
-    private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
 
-    // 3. Public Read-Only State (The UI will listen to this)
-    val uiState : StateFlow<UiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     init {
-        // Fetch the data the moment the ViewModel is created
-        observeLocalDatabase()
-        refreshFromNetwork()
-    }
-    private fun observeLocalDatabase(){
-        viewModelScope.launch {
-            repository.wordsFlow
-                .catch { error ->
-                    _uiState.value = UiState.Error(error.message ?: "Database query failed")
-                }
-                .collect { words ->
-                    _uiState.value = UiState.Success(words)
-                }
-        }
+        startStudySession()
     }
 
-    private fun refreshFromNetwork() {
-        viewModelScope.launch {
-            repository.fetchWords().onFailure { error ->
-                // If offline, Room cache remains visible; optionally report error state
-                if (_uiState.value !is UiState.Success) {
-                    _uiState.value = UiState.Error(error.message ?: "Network sync failed")
-                }
-            }
-        }
-    }
-    /*
-        private fun fetchVocabulary() {
+    /**
+     * Initializes today's review session:
+     * 1. Triggers network sync to grab any new words from GitHub Gist into Room.
+     * 2. Takes a snapshot of all cards currently due for review from Room.
+     */
+    fun startStudySession() {
         viewModelScope.launch {
             _uiState.value = UiState.Loading
-            val result = repository.fetchWords()
 
-            result.onSuccess { words ->
-              //  Log.d("KtorTest", "ViewModel State: SUCCESS! Fetched ${words.size} words.")
-                _uiState.value = UiState.Success(words)
-            }.onFailure { exception ->
-              //  Log.d("KtorTest", "ViewModel State: ERROR! ${exception.message}")
-                _uiState.value = UiState.Error(exception.message ?: "Unknown error occurred")
+            // Background sync (ignores duplicates already in SQLite)
+            repository.syncWords()
+
+            try {
+                // Take a one-time snapshot of cards due right now
+                val dueCards = repository.getDueWordsFlow().first()
+
+                if (dueCards.isEmpty()) {
+                    _uiState.value = UiState.CompletedToday
+                } else {
+                    _uiState.value = UiState.ReviewSession(cards = dueCards)
+                }
+            } catch (e: Exception) {
+                _uiState.value = UiState.Error(e.message ?: "Failed to load due cards")
             }
         }
-
-
-
-        }
-    */
-
-    fun isAlreadyMastered(wordId:String){
-        val currentUiState = _uiState.value
-        if (currentUiState is UiState.Success) {
-            val updatedList = currentUiState.words.filter { it.id != wordId }
-        _uiState.value = UiState.Success(updatedList)
-            }
-
     }
 
+    /**
+     * Called when a card is swiped.
+     * @param word The card that was swiped.
+     * @param isCorrect True if swiped right (remembered), False if swiped left (forgotten).
+     */
+    fun onCardReviewed(word: Word, isCorrect: Boolean) {
+        val currentState = _uiState.value
+        if (currentState !is UiState.ReviewSession) return
 
+        viewModelScope.launch {
+            // 1. Asynchronously persist the Leitner calculation directly to SQLite
+            repository.submitReview(
+                wordId = word.id,
+                currentBox = word.boxLevel,
+                isCorrect = isCorrect
+            )
+
+            // 2. Manipulate the active session queue in memory
+            val updatedQueue = currentState.cards.toMutableList()
+            updatedQueue.remove(word)
+
+            if (!isCorrect) {
+                // If forgotten: demote to Box 1 and append to end of queue for re-practice
+                val recycledCard = word.copy(boxLevel = 1)
+                updatedQueue.add(recycledCard)
+            }
+
+            // 3. Emit updated session or transition to Completed state
+            if (updatedQueue.isEmpty()) {
+                _uiState.value = UiState.CompletedToday
+            } else {
+                _uiState.value = UiState.ReviewSession(cards = updatedQueue)
+            }
+        }
+    }
 }

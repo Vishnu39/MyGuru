@@ -20,5 +20,5 @@ actual fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase> {
     return Room.databaseBuilder<AppDatabase>(
         name = dbFilePath,
         factory = { AppDatabaseConstructor.initialize() }
-    )
+    ).fallbackToDestructiveMigration(true)
 }
