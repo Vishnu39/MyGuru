@@ -2,6 +2,8 @@ package com.vish.myguru.features.vacabulary.repository
 
 import com.vish.myguru.core.database.WordDao
 import com.vish.myguru.core.database.WordEntity
+import com.vish.myguru.currentTimeMillis
+import com.vish.myguru.features.vacabulary.model.LeitnerEngine
 import com.vish.myguru.features.vacabulary.model.Word
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -11,60 +13,71 @@ import io.ktor.http.ContentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
-val ktorClient = HttpClient {
-    install(ContentNegotiation) {
-        json(Json {
-            ignoreUnknownKeys = true
-            prettyPrint = true
-            isLenient = true
-        }, contentType = ContentType.Any)
-    }
-}
-
-class VocabularyRepository (private val wordDao: WordDao){
-
-    // 1. Cont stream of unmastered words from local Room DB
-    val wordsFlow: Flow<List<Word>> = wordDao.observePendingWords().map{
-        entities -> entities.map { it.toDomain() }
-    }
-    suspend fun fetchWords(): Result<Unit> = withContext(Dispatchers.IO) {
-         runCatching {
-
-       //      val remoteWords= ktorClient.get("https://gist.githubusercontent.com/Vishnu39/53b931797358491c32fe88d3122f6a74/raw/514d36a43cc53e15a80dee10444bd2ba718e946d/vocab.json")
-             val remoteWords= ktorClient.get("https://gist.githubusercontent.com/Vishnu39/53b931797358491c32fe88d3122f6a74/raw/a32cb4cbd53619af6fec226514dbb6576e8ac6af/vocab.json")
-                    .body<List<Word>>()
-                val entities = remoteWords.map {
-                    word -> WordEntity(
-                        id = word.id,
-                        germanTerm = word.germanTerm,
-                        englishTranslation = word.englishTranslation,
-                        article = word.article,
-                        isMastered = word.isMastered,
-                        nextReviewEpoch = 0L
-                    )
-                }
-             wordDao.insertWords(entities)
+class VocabularyRepository(
+    private val wordDao: WordDao
+) {
+    private val httpClient = HttpClient {
+        install(ContentNegotiation) {
+            json(
+                Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
+                },
+                contentType = ContentType.Any
+            )
         }
     }
 
-    suspend fun fetchA1Vocabulary(): List<Word> = withContext(Dispatchers.IO) {
-        delay(2000L)
-        listOf(
-            Word("1", "Gebäude", "building", "das"),
-            Word("2", "Zeitung", "newspaper", "die"),
-            Word("3", "Beruf", "profession", "der")
-        )
+    // Observe words due right now
+    fun getDueWordsFlow(): Flow<List<Word>> {
+        val now = currentTimeMillis()
+        return wordDao.observeDueCards(now).map { entities ->
+            entities.map { it.toDomain() }
+        }
     }
 
-    // 3. Mark word mastered directly in Room
-    suspend fun markAsMastered(wordId: String) = withContext(Dispatchers.IO){
-        wordDao.markAsMastered(wordId)
+    // Sync remote list into local Room cache without overriding existing progress
+    suspend fun syncWords(): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            val remoteWords = httpClient.get(
+                "https://gist.githubusercontent.com/Vishnu39/53b931797358491c32fe88d3122f6a74/raw/vocab.json"
+            ).body<List<Word>>()
+
+            val entities = remoteWords.map { word ->
+                WordEntity(
+                    id = word.id,
+                    germanTerm = word.germanTerm,
+                    englishTranslation = word.englishTranslation,
+                    article = word.article,
+                    isMastered = word.isMastered,
+                    boxLevel = word.boxLevel,
+                    nextReviewEpoch = word.nextReviewEpoch
+                )
+            }
+            wordDao.insertWords(entities)
+        }
+    }
+
+    // Submit review and persist new Leitner schedule to Room
+    suspend fun submitReview(wordId: String, currentBox: Int, isCorrect: Boolean) = withContext(Dispatchers.IO) {
+        val now = currentTimeMillis()
+        val evaluation = LeitnerEngine.evaluate(
+            currentBox = currentBox,
+            isCorrect = isCorrect,
+            nowEpoch = now
+        )
+
+        wordDao.updateWordProgress(
+            wordId = wordId,
+            newBox = evaluation.nextBoxLevel,
+            nextEpoch = evaluation.nextReviewEpoch,
+            isMastered = evaluation.isMastered
+        )
     }
 
     private fun WordEntity.toDomain() = Word(
@@ -72,11 +85,8 @@ class VocabularyRepository (private val wordDao: WordDao){
         germanTerm = germanTerm,
         englishTranslation = englishTranslation,
         article = article,
-        isMastered = isMastered
+        isMastered = isMastered,
+        boxLevel = boxLevel,
+        nextReviewEpoch = nextReviewEpoch
     )
-
-
-
 }
-
-

@@ -6,7 +6,7 @@ import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 
 
-@Database(entities = [WordEntity::class], version = 1, exportSchema = false)
+@Database(entities = [WordEntity::class], version = 2, exportSchema = false)
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun wordDao(): WordDao
