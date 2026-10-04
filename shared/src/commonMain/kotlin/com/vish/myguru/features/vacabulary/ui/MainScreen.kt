@@ -182,12 +182,10 @@ fun LeitnerSwipeCard(
         confirmValueChange = { dismissValue ->
             when (dismissValue) {
                 SwipeToDismissBoxValue.StartToEnd -> {
-                    // Swiped Right -> Remembered
                     onReviewed(true)
                     true
                 }
                 SwipeToDismissBoxValue.EndToStart -> {
-                    // Swiped Left -> Forgotten
                     onReviewed(false)
                     true
                 }
@@ -196,11 +194,10 @@ fun LeitnerSwipeCard(
         }
     )
 
-    // Dynamic swipe background color (Green for remembered, Red for forgotten)
     val backgroundColor by animateColorAsState(
         targetValue = when (dismissState.targetValue) {
-            SwipeToDismissBoxValue.StartToEnd -> Color(0xFF4CAF50) // Green
-            SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.error // Red
+            SwipeToDismissBoxValue.StartToEnd -> Color(0xFF4CAF50)
+            SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.error
             SwipeToDismissBoxValue.Settled -> Color.Transparent
         },
         label = "swipe_color_animation"
@@ -210,7 +207,7 @@ fun LeitnerSwipeCard(
         state = dismissState,
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp)),
+            .clip(RoundedCornerShape(20.dp)),
         backgroundContent = {
             Box(
                 modifier = Modifier
@@ -259,44 +256,7 @@ fun LeitnerSwipeCard(
             }
         }
     ) {
-        // Front Face of Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(300.dp),
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                val fullTerm = if (!word.article.isNullOrBlank()) {
-                    "${word.article} ${word.germanTerm}"
-                } else {
-                    word.germanTerm
-                }
-
-                Text(
-                    text = fullTerm,
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = word.englishTranslation,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
+        // Embed the 3D flip card as the front-facing swipeable surface
+        VocabFlipCard(word = word)
     }
 }
