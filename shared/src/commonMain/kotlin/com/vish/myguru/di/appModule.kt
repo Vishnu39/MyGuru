@@ -1,12 +1,14 @@
 package com.vish.myguru.di
 
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import com.vish.myguru.features.vacabulary.ui.MainViewModel
-import com.vish.myguru.features.vacabulary.repository.DefaultVocabularyRepository
-import com.vish.myguru.features.vacabulary.repository.VocabularyRepository
+import com.vish.myguru.features.vocabulary.ui.MainViewModel
+import com.vish.myguru.features.vocabulary.repository.DefaultVocabularyRepository
+import com.vish.myguru.features.vocabulary.repository.VocabularyRepository
 import com.vish.myguru.core.database.AppDatabase
 import com.vish.myguru.core.database.WordDao
 import com.vish.myguru.core.database.getDatabaseBuilder
+import com.vish.myguru.core.network.createHttpClient
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import org.koin.core.context.startKoin
@@ -23,15 +25,18 @@ val appModule = module {
             .build()
     }
 
-// 2. DAO
+    // 2. DAO
     single<WordDao> {
         get<AppDatabase>().wordDao()
     }
 
-    // 3. Repository
-    single<VocabularyRepository> { DefaultVocabularyRepository(wordDao = get()) }
+    // 3. Networking
+    single<HttpClient> { createHttpClient() }
 
-    // 4. ViewModel (injects the single VocabularyRepository)
+    // 4. Repository
+    single<VocabularyRepository> { DefaultVocabularyRepository(wordDao = get(), httpClient = get()) }
+
+    // 5. ViewModel (injects the single VocabularyRepository)
     viewModel { MainViewModel(get()) }
 }
 

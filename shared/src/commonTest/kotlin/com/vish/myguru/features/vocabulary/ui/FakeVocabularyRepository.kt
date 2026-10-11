@@ -1,7 +1,7 @@
-package com.vish.myguru.features.vacabulary.ui
+package com.vish.myguru.features.vocabulary.ui
 
-import com.vish.myguru.features.vacabulary.model.Word
-import com.vish.myguru.features.vacabulary.repository.VocabularyRepository
+import com.vish.myguru.features.vocabulary.model.Word
+import com.vish.myguru.features.vocabulary.repository.VocabularyRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
