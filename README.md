@@ -1,5 +1,7 @@
 # VocabTrackerKMP (MyGuru)
 
+[![CI](https://github.com/Vishnu39/MyGuru/actions/workflows/ci.yml/badge.svg)](https://github.com/Vishnu39/MyGuru/actions/workflows/ci.yml)
+
 **MyGuru** is a Kotlin Multiplatform (KMP) & Compose Multiplatform application for Android and iOS designed to help users learn and retain German-English vocabulary using an adaptive **Leitner Spaced Repetition System**.
 
 ---
