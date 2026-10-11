@@ -1,5 +1,7 @@
 package com.vish.myguru
 
+import platform.Foundation.NSDate
+import platform.Foundation.timeIntervalSince1970
 import platform.UIKit.UIDevice
 
 class IOSPlatform: Platform {
