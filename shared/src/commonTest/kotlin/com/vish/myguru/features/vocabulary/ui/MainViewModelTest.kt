@@ -1,6 +1,6 @@
-package com.vish.myguru.features.vacabulary.ui
+package com.vish.myguru.features.vocabulary.ui
 
-import com.vish.myguru.features.vacabulary.model.Word
+import com.vish.myguru.features.vocabulary.model.Word
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher

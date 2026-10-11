@@ -1,4 +1,4 @@
-package com.vish.myguru.features.vacabulary.ui
+package com.vish.myguru.features.vocabulary.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -9,7 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.vish.myguru.features.vacabulary.model.Word
+import com.vish.myguru.features.vocabulary.model.Word
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

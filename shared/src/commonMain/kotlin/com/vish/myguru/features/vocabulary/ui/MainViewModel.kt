@@ -1,9 +1,9 @@
-package com.vish.myguru.features.vacabulary.ui
+package com.vish.myguru.features.vocabulary.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vish.myguru.features.vacabulary.model.Word
-import com.vish.myguru.features.vacabulary.repository.VocabularyRepository
+import com.vish.myguru.features.vocabulary.model.Word
+import com.vish.myguru.features.vocabulary.repository.VocabularyRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

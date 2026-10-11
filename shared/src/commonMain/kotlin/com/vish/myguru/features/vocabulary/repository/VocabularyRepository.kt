@@ -1,10 +1,10 @@
-package com.vish.myguru.features.vacabulary.repository
+package com.vish.myguru.features.vocabulary.repository
 
 import com.vish.myguru.core.database.WordDao
 import com.vish.myguru.core.database.WordEntity
 import com.vish.myguru.currentTimeMillis
-import com.vish.myguru.features.vacabulary.model.LeitnerEngine
-import com.vish.myguru.features.vacabulary.model.Word
+import com.vish.myguru.features.vocabulary.model.LeitnerEngine
+import com.vish.myguru.features.vocabulary.model.Word
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation

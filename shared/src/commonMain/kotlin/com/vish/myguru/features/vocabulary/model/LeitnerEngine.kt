@@ -1,4 +1,4 @@
-package com.vish.myguru.features.vacabulary.model
+package com.vish.myguru.features.vocabulary.model
 
 object LeitnerEngine {
     private const val ONE_DAY_MS = 24 * 60 * 60 * 1000L

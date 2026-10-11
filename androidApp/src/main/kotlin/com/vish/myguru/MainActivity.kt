@@ -4,8 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.vish.myguru.features.vacabulary.ui.MainScreen
-import com.vish.myguru.features.vacabulary.ui.MainViewModel
+import com.vish.myguru.features.vocabulary.ui.MainScreen
+import com.vish.myguru.features.vocabulary.ui.MainViewModel
 import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {

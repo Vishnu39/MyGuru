@@ -1,4 +1,4 @@
-package com.vish.myguru.features.vacabulary.model
+package com.vish.myguru.features.vocabulary.model
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

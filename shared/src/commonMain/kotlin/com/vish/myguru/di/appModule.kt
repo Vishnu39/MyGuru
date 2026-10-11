@@ -1,9 +1,9 @@
 package com.vish.myguru.di
 
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import com.vish.myguru.features.vacabulary.ui.MainViewModel
-import com.vish.myguru.features.vacabulary.repository.DefaultVocabularyRepository
-import com.vish.myguru.features.vacabulary.repository.VocabularyRepository
+import com.vish.myguru.features.vocabulary.ui.MainViewModel
+import com.vish.myguru.features.vocabulary.repository.DefaultVocabularyRepository
+import com.vish.myguru.features.vocabulary.repository.VocabularyRepository
 import com.vish.myguru.core.database.AppDatabase
 import com.vish.myguru.core.database.WordDao
 import com.vish.myguru.core.database.getDatabaseBuilder

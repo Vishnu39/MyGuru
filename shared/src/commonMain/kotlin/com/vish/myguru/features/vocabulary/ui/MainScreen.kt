@@ -1,4 +1,4 @@
-package com.vish.myguru.features.vacabulary.ui
+package com.vish.myguru.features.vocabulary.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
@@ -40,7 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.vish.myguru.features.vacabulary.model.Word
+import com.vish.myguru.features.vocabulary.model.Word
 
 @Composable
 fun MainScreen(viewModel: MainViewModel) {
