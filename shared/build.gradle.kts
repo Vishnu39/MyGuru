@@ -45,47 +45,35 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
-            // 1. ANDROID ENGINE GOES HERE
-            val ktorVersion = "3.5.1"
-            implementation("io.ktor:ktor-client-okhttp:${ktorVersion}")
+            implementation(libs.ktor.client.okhttp)
         }
         iosMain.dependencies {
-            val ktorVersion = "3.5.1"
-            implementation("io.ktor:ktor-client-darwin:${ktorVersion}")
+            implementation(libs.ktor.client.darwin)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
+            implementation(libs.compose.materialIconsCore)
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
-            // Add Ktor
-            val ktorVersion = "3.5.1"
-            implementation("io.ktor:ktor-client-core:${ktorVersion}")
-            implementation("io.ktor:ktor-client-content-negotiation:${ktorVersion}")
-            implementation("io.ktor:ktor-serialization-kotlinx-json:${ktorVersion}")
-            // ADD THIS: The core library that contains 'kotlinx.serialization.json.Json'
-            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-            // Add these explicit icon dependencies
-            implementation("org.jetbrains.compose.material:material-icons-core:1.7.3")
-            implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
-            // Adds coroutines support across all KMP targets
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
-            val koinVersion = "4.2.2"
 
-            // Koin Core
-            implementation("io.insert-koin:koin-core:$koinVersion")
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.serialization.json)
 
-            // Koin Compose & ViewModel integration
-            implementation("io.insert-koin:koin-compose:$koinVersion")
-            implementation("io.insert-koin:koin-compose-viewmodel:$koinVersion")
-            // Room KMP
-            implementation("androidx.room:room-runtime:2.8.4")
-            implementation("androidx.sqlite:sqlite-bundled:2.7.0")
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.contentNegotiation)
+            implementation(libs.ktor.serialization.kotlinxJson)
 
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.composeViewmodel)
+
+            implementation(libs.room.runtime)
+            implementation(libs.sqlite.bundled)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
