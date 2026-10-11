@@ -7,16 +7,12 @@ import com.vish.myguru.features.vocabulary.model.LeitnerEngine
 import com.vish.myguru.features.vocabulary.model.Word
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
-import io.ktor.http.ContentType
-import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
 
 interface VocabularyRepository {
     /** Observes the words that are due for review right now. */
@@ -30,19 +26,9 @@ interface VocabularyRepository {
 }
 
 class DefaultVocabularyRepository(
-    private val wordDao: WordDao
+    private val wordDao: WordDao,
+    private val httpClient: HttpClient
 ) : VocabularyRepository {
-    private val httpClient = HttpClient {
-        install(ContentNegotiation) {
-            json(
-                Json {
-                    ignoreUnknownKeys = true
-                    isLenient = true
-                },
-                contentType = ContentType.Any
-            )
-        }
-    }
 
     // Observe words due right now
     override fun getDueWordsFlow(): Flow<List<Word>> {
@@ -55,9 +41,7 @@ class DefaultVocabularyRepository(
     // Sync remote list into local Room cache without overriding existing progress
     override suspend fun syncWords(): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
-            val remoteWords = httpClient.get(
-                "https://gist.githubusercontent.com/Vishnu39/53b931797358491c32fe88d3122f6a74/raw/vocab.json"
-            ).body<List<Word>>()
+            val remoteWords = httpClient.get(VOCABULARY_URL).body<List<Word>>()
 
             val entities = remoteWords.map { word ->
                 WordEntity(
@@ -100,4 +84,9 @@ class DefaultVocabularyRepository(
         boxLevel = boxLevel,
         nextReviewEpoch = nextReviewEpoch
     )
+
+    companion object {
+        const val VOCABULARY_URL =
+            "https://gist.githubusercontent.com/Vishnu39/53b931797358491c32fe88d3122f6a74/raw/vocab.json"
+    }
 }
