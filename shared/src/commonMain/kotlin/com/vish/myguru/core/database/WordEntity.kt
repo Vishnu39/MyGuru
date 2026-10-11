@@ -1,14 +1,7 @@
 package com.vish.myguru.core.database
 
-
-
-import androidx.room.Dao
 import androidx.room.Entity
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
-import androidx.room.Query
-import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "german_words")
 data class WordEntity(
@@ -20,4 +13,3 @@ data class WordEntity(
     val boxLevel: Int = 1,
     val nextReviewEpoch: Long = 0L // Unix timestamp for the next Leitner review
 )
-
