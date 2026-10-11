@@ -12,8 +12,17 @@ import kotlinx.coroutines.launch
 
 sealed interface UiState {
     data object Loading : UiState
-    data class ReviewSession(val cards: List<Word>) : UiState
-    data object CompletedToday : UiState
+
+    /**
+     * @property syncFailed true when the latest sync failed; [cards] then come from the local cache.
+     */
+    data class ReviewSession(val cards: List<Word>, val syncFailed: Boolean = false) : UiState
+
+    /**
+     * @property syncFailed true when the latest sync failed, so new words may be missing.
+     */
+    data class CompletedToday(val syncFailed: Boolean = false) : UiState
+
     data class Error(val message: String) : UiState
 }
 
@@ -31,23 +40,24 @@ class MainViewModel(
     /**
      * Initializes today's review session:
      * 1. Triggers network sync to grab any new words from GitHub Gist into Room.
+     *    A failed sync is not fatal: cached cards are still shown and the state is flagged.
      * 2. Takes a snapshot of all cards currently due for review from Room.
      */
     fun startStudySession() {
         viewModelScope.launch {
             _uiState.value = UiState.Loading
 
-            // Background sync (ignores duplicates already in SQLite)
-            repository.syncWords()
+            // Sync new words (ignores duplicates already in SQLite); keep going offline
+            val syncFailed = repository.syncWords().isFailure
 
             try {
                 // Take a one-time snapshot of cards due right now
                 val dueCards = repository.getDueWordsFlow().first()
 
                 if (dueCards.isEmpty()) {
-                    _uiState.value = UiState.CompletedToday
+                    _uiState.value = UiState.CompletedToday(syncFailed = syncFailed)
                 } else {
-                    _uiState.value = UiState.ReviewSession(cards = dueCards)
+                    _uiState.value = UiState.ReviewSession(cards = dueCards, syncFailed = syncFailed)
                 }
             } catch (e: Exception) {
                 _uiState.value = UiState.Error(e.message ?: "Failed to load due cards")
@@ -84,9 +94,9 @@ class MainViewModel(
 
             // 3. Emit updated session or transition to Completed state
             if (updatedQueue.isEmpty()) {
-                _uiState.value = UiState.CompletedToday
+                _uiState.value = UiState.CompletedToday(syncFailed = currentState.syncFailed)
             } else {
-                _uiState.value = UiState.ReviewSession(cards = updatedQueue)
+                _uiState.value = currentState.copy(cards = updatedQueue)
             }
         }
     }

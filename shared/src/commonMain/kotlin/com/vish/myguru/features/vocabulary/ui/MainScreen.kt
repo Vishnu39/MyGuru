@@ -106,6 +106,14 @@ fun MainScreen(viewModel: MainViewModel) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
+                        if (state.syncFailed) {
+                            Text(
+                                text = "Couldn't check for new words. Check your connection and try again.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(onClick = { viewModel.startStudySession() }) {
                             Text("Check for Updates")
@@ -145,6 +153,10 @@ fun MainScreen(viewModel: MainViewModel) {
                             )
                         }
 
+                        if (state.syncFailed) {
+                            SyncFailedBanner()
+                        }
+
                         // Central Flashcard:
                         // key(currentCard.id) forces Compose to recreate the swipe state
                         // so the incoming card starts centered, not pre-swiped!
@@ -168,6 +180,22 @@ fun MainScreen(viewModel: MainViewModel) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SyncFailedBanner() {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "Offline: showing saved cards. New words will sync next time.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
     }
 }
 

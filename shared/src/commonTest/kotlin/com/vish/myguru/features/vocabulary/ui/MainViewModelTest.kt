@@ -52,7 +52,7 @@ class MainViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, repository.syncCount)
-        assertEquals(listOf(hund, katze), sessionCards(viewModel))
+        assertEquals(UiState.ReviewSession(listOf(hund, katze), syncFailed = false), viewModel.uiState.value)
     }
 
     @Test
@@ -60,11 +60,11 @@ class MainViewModelTest {
         val viewModel = MainViewModel(FakeVocabularyRepository(dueWords = emptyList()))
         advanceUntilIdle()
 
-        assertEquals(UiState.CompletedToday, viewModel.uiState.value)
+        assertEquals(UiState.CompletedToday(), viewModel.uiState.value)
     }
 
     @Test
-    fun stillShowsCachedCardsWhenSyncFails() = runTest(dispatcher) {
+    fun syncFailureIsFlaggedButCachedCardsAreStillShown() = runTest(dispatcher) {
         val repository = FakeVocabularyRepository(dueWords = listOf(hund)).apply {
             syncResult = Result.failure(IllegalStateException("offline"))
         }
@@ -72,7 +72,51 @@ class MainViewModelTest {
         val viewModel = MainViewModel(repository)
         advanceUntilIdle()
 
-        assertEquals(listOf(hund), sessionCards(viewModel))
+        assertEquals(UiState.ReviewSession(listOf(hund), syncFailed = true), viewModel.uiState.value)
+    }
+
+    @Test
+    fun syncFailureIsFlaggedWhenNothingIsDue() = runTest(dispatcher) {
+        val repository = FakeVocabularyRepository(dueWords = emptyList()).apply {
+            syncResult = Result.failure(IllegalStateException("offline"))
+        }
+
+        val viewModel = MainViewModel(repository)
+        advanceUntilIdle()
+
+        assertEquals(UiState.CompletedToday(syncFailed = true), viewModel.uiState.value)
+    }
+
+    @Test
+    fun syncFailureFlagIsKeptForTheRestOfTheSession() = runTest(dispatcher) {
+        val repository = FakeVocabularyRepository(dueWords = listOf(hund, katze)).apply {
+            syncResult = Result.failure(IllegalStateException("offline"))
+        }
+        val viewModel = MainViewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.onCardReviewed(hund, isCorrect = true)
+        advanceUntilIdle()
+        assertEquals(UiState.ReviewSession(listOf(katze), syncFailed = true), viewModel.uiState.value)
+
+        viewModel.onCardReviewed(katze, isCorrect = true)
+        advanceUntilIdle()
+        assertEquals(UiState.CompletedToday(syncFailed = true), viewModel.uiState.value)
+    }
+
+    @Test
+    fun successfulRetryClearsTheSyncFailure() = runTest(dispatcher) {
+        val repository = FakeVocabularyRepository(dueWords = listOf(hund)).apply {
+            syncResult = Result.failure(IllegalStateException("offline"))
+        }
+        val viewModel = MainViewModel(repository)
+        advanceUntilIdle()
+
+        repository.syncResult = Result.success(Unit)
+        viewModel.startStudySession()
+        advanceUntilIdle()
+
+        assertEquals(UiState.ReviewSession(listOf(hund), syncFailed = false), viewModel.uiState.value)
     }
 
     @Test
@@ -144,7 +188,7 @@ class MainViewModelTest {
             ),
             repository.reviews
         )
-        assertEquals(UiState.CompletedToday, viewModel.uiState.value)
+        assertEquals(UiState.CompletedToday(), viewModel.uiState.value)
     }
 
     @Test
@@ -155,7 +199,7 @@ class MainViewModelTest {
         viewModel.onCardReviewed(katze, isCorrect = true)
         advanceUntilIdle()
 
-        assertEquals(UiState.CompletedToday, viewModel.uiState.value)
+        assertEquals(UiState.CompletedToday(), viewModel.uiState.value)
     }
 
     @Test
@@ -168,7 +212,7 @@ class MainViewModelTest {
         advanceUntilIdle()
 
         assertTrue(repository.reviews.isEmpty())
-        assertEquals(UiState.CompletedToday, viewModel.uiState.value)
+        assertEquals(UiState.CompletedToday(), viewModel.uiState.value)
     }
 
     @Test
@@ -176,7 +220,7 @@ class MainViewModelTest {
         val repository = FakeVocabularyRepository(dueWords = emptyList())
         val viewModel = MainViewModel(repository)
         advanceUntilIdle()
-        assertEquals(UiState.CompletedToday, viewModel.uiState.value)
+        assertEquals(UiState.CompletedToday(), viewModel.uiState.value)
 
         repository.dueWords = listOf(haus)
         viewModel.startStudySession()
