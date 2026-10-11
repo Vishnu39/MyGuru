@@ -1,4 +1,4 @@
-package com.vish.myguru.features.vacabulary.ui
+package com.vish.myguru.features.vocabulary.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
@@ -17,8 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -39,8 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.vish.myguru.features.vacabulary.model.Word
+import com.vish.myguru.features.vocabulary.model.Word
 
 @Composable
 fun MainScreen(viewModel: MainViewModel) {
@@ -106,6 +103,14 @@ fun MainScreen(viewModel: MainViewModel) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
+                        if (state.syncFailed) {
+                            Text(
+                                text = "Couldn't check for new words. Check your connection and try again.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(onClick = { viewModel.startStudySession() }) {
                             Text("Check for Updates")
@@ -145,10 +150,15 @@ fun MainScreen(viewModel: MainViewModel) {
                             )
                         }
 
+                        if (state.syncFailed) {
+                            SyncFailedBanner()
+                        }
+
                         // Central Flashcard:
-                        // key(currentCard.id) forces Compose to recreate the swipe state
-                        // so the incoming card starts centered, not pre-swiped!
-                        key(currentCard.id) {
+                        // Keying on the review count recreates the swipe state for every review,
+                        // so the incoming card starts centered, even when a forgotten card comes
+                        // straight back as the only one left.
+                        key(state.reviewedCount) {
                             LeitnerSwipeCard(
                                 word = currentCard,
                                 onReviewed = { isCorrect ->
@@ -171,6 +181,22 @@ fun MainScreen(viewModel: MainViewModel) {
     }
 }
 
+@Composable
+private fun SyncFailedBanner() {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "Offline: showing saved cards. New words will sync next time.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeitnerSwipeCard(
@@ -178,21 +204,7 @@ fun LeitnerSwipeCard(
     onReviewed: (isCorrect: Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { dismissValue ->
-            when (dismissValue) {
-                SwipeToDismissBoxValue.StartToEnd -> {
-                    onReviewed(true)
-                    true
-                }
-                SwipeToDismissBoxValue.EndToStart -> {
-                    onReviewed(false)
-                    true
-                }
-                SwipeToDismissBoxValue.Settled -> false
-            }
-        }
-    )
+    val dismissState = rememberSwipeToDismissBoxState()
 
     val backgroundColor by animateColorAsState(
         targetValue = when (dismissState.targetValue) {
@@ -208,6 +220,13 @@ fun LeitnerSwipeCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp)),
+        onDismiss = { dismissValue ->
+            when (dismissValue) {
+                SwipeToDismissBoxValue.StartToEnd -> onReviewed(true)
+                SwipeToDismissBoxValue.EndToStart -> onReviewed(false)
+                SwipeToDismissBoxValue.Settled -> Unit
+            }
+        },
         backgroundContent = {
             Box(
                 modifier = Modifier
