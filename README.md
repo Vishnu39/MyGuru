@@ -40,7 +40,8 @@ VocabTrackerKMP/
     │   └── kotlin/com/vish/myguru/
     │       ├── core/
     │       │   ├── database/   # Room Database, DAO (WordDao), and WordEntity
-    │       │   └── designsystem/# Material 3 AppTheme, AppColors, AppTypography
+    │       │   ├── designsystem/# Material 3 AppTheme, AppColors, AppTypography
+    │       │   └── network/    # Ktor HttpClient factory (provided through Koin)
     │       ├── di/             # Koin Dependency Injection module (appModule)
     │       └── features/
     │           └── vocabulary/ # Models, LeitnerEngine, Repository, ViewModel & Compose UI
