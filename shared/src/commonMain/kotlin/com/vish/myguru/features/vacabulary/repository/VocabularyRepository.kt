@@ -18,9 +18,20 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
-class VocabularyRepository(
+interface VocabularyRepository {
+    /** Observes the words that are due for review right now. */
+    fun getDueWordsFlow(): Flow<List<Word>>
+
+    /** Pulls the remote word list into the local cache without overwriting existing progress. */
+    suspend fun syncWords(): Result<Unit>
+
+    /** Applies the Leitner evaluation for a review and persists the new schedule. */
+    suspend fun submitReview(wordId: String, currentBox: Int, isCorrect: Boolean)
+}
+
+class DefaultVocabularyRepository(
     private val wordDao: WordDao
-) {
+) : VocabularyRepository {
     private val httpClient = HttpClient {
         install(ContentNegotiation) {
             json(
@@ -34,7 +45,7 @@ class VocabularyRepository(
     }
 
     // Observe words due right now
-    fun getDueWordsFlow(): Flow<List<Word>> {
+    override fun getDueWordsFlow(): Flow<List<Word>> {
         val now = currentTimeMillis()
         return wordDao.observeDueCards(now).map { entities ->
             entities.map { it.toDomain() }
@@ -42,7 +53,7 @@ class VocabularyRepository(
     }
 
     // Sync remote list into local Room cache without overriding existing progress
-    suspend fun syncWords(): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun syncWords(): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
             val remoteWords = httpClient.get(
                 "https://gist.githubusercontent.com/Vishnu39/53b931797358491c32fe88d3122f6a74/raw/vocab.json"
@@ -64,7 +75,7 @@ class VocabularyRepository(
     }
 
     // Submit review and persist new Leitner schedule to Room
-    suspend fun submitReview(wordId: String, currentBox: Int, isCorrect: Boolean) = withContext(Dispatchers.IO) {
+    override suspend fun submitReview(wordId: String, currentBox: Int, isCorrect: Boolean): Unit = withContext(Dispatchers.IO) {
         val now = currentTimeMillis()
         val evaluation = LeitnerEngine.evaluate(
             currentBox = currentBox,

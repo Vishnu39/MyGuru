@@ -2,6 +2,7 @@ package com.vish.myguru.di
 
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.vish.myguru.features.vacabulary.ui.MainViewModel
+import com.vish.myguru.features.vacabulary.repository.DefaultVocabularyRepository
 import com.vish.myguru.features.vacabulary.repository.VocabularyRepository
 import com.vish.myguru.core.database.AppDatabase
 import com.vish.myguru.core.database.WordDao
@@ -28,7 +29,7 @@ val appModule = module {
     }
 
     // 3. Repository
-    single { VocabularyRepository(wordDao = get()) }
+    single<VocabularyRepository> { DefaultVocabularyRepository(wordDao = get()) }
 
     // 4. ViewModel (injects the single VocabularyRepository)
     viewModel { MainViewModel(get()) }

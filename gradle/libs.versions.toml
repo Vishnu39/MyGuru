@@ -13,6 +13,7 @@ composeMultiplatform = "1.11.1"
 junit = "4.13.2"
 kotlin = "2.4.10"
 ksp = "2.3.12"
+kotlinx-coroutines = "1.11.0"
 material3 = "1.11.0-alpha07"
 ktor = "3.5.1"
 # Jetpack multiplatform lifecycle
@@ -23,6 +24,7 @@ sqlite = "2.4.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { module = "junit:junit", version.ref = "junit" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
