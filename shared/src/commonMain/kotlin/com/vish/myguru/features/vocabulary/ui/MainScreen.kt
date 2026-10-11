@@ -158,9 +158,10 @@ fun MainScreen(viewModel: MainViewModel) {
                         }
 
                         // Central Flashcard:
-                        // key(currentCard.id) forces Compose to recreate the swipe state
-                        // so the incoming card starts centered, not pre-swiped!
-                        key(currentCard.id) {
+                        // Keying on the review count recreates the swipe state for every review,
+                        // so the incoming card starts centered, even when a forgotten card comes
+                        // straight back as the only one left.
+                        key(state.reviewedCount) {
                             LeitnerSwipeCard(
                                 word = currentCard,
                                 onReviewed = { isCorrect ->
@@ -206,21 +207,7 @@ fun LeitnerSwipeCard(
     onReviewed: (isCorrect: Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { dismissValue ->
-            when (dismissValue) {
-                SwipeToDismissBoxValue.StartToEnd -> {
-                    onReviewed(true)
-                    true
-                }
-                SwipeToDismissBoxValue.EndToStart -> {
-                    onReviewed(false)
-                    true
-                }
-                SwipeToDismissBoxValue.Settled -> false
-            }
-        }
-    )
+    val dismissState = rememberSwipeToDismissBoxState()
 
     val backgroundColor by animateColorAsState(
         targetValue = when (dismissState.targetValue) {
@@ -236,6 +223,13 @@ fun LeitnerSwipeCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp)),
+        onDismiss = { dismissValue ->
+            when (dismissValue) {
+                SwipeToDismissBoxValue.StartToEnd -> onReviewed(true)
+                SwipeToDismissBoxValue.EndToStart -> onReviewed(false)
+                SwipeToDismissBoxValue.Settled -> Unit
+            }
+        },
         backgroundContent = {
             Box(
                 modifier = Modifier
